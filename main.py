@@ -86,6 +86,9 @@ def process_image(event, context):
     results_bucket_name = "route_results_00"
     results_bucket = storage_client.get_bucket(results_bucket_name)
     blob = results_bucket.blob("test_route.json")
+    
+    # todo: insert JSON to BQ
+    # todo: query with Looker
 
     print("Saving result to gs://" + results_bucket_name + "/test_route.json")
 
