@@ -61,9 +61,102 @@ def process_image(event, context):
         print("Sending " + image_file_location + " to SVAI to extract item IDs from image")
 
         # Placeholder: SVAI API call happens here
-        # item_ids_found_json = {"items":["267364","274187","013400"]}
-        # route_json_data["data"][0].update(item_ids_found_json)
-        route_json_data["data"][0]["items"] = ["267364","274187","013400"]
+        # Temp: sample SVAI response string JSON
+        svai_response_string = '''
+        {
+          "priceTags": [
+            {
+              "priceTagBox": {
+                "boundingBox": {
+                  "xMin": 0.84018904,
+                  "xMax": 0.9973369,
+                  "yMin": 0.65774584,
+                  "yMax": 0.735467
+                },
+                "detectionScore": 0.9999897,
+                "mid": "price_tag",
+                "objectClass": "price_tag"
+              },
+              "priceTagText": "244236\nTIDE FREE LIQ HE ORG 208 OZ 15\ndle\n",
+              "entities": [
+                {
+                  "type": "number",
+                  "mentionText": "244236",
+                  "confidence": 1,
+                  "region": {
+                    "xMin": 0.24053451,
+                    "xMax": 0.8285078,
+                    "yMin": 0.3160763,
+                    "yMax": 0.48501363
+                  },
+                  "normalizedTextValue": "244236"
+                }
+              ]
+            },
+            {
+              "priceTagBox": {
+                "boundingBox": {
+                  "xMin": 0.76975274,
+                  "xMax": 0.8773764,
+                  "yMin": 0.23598571,
+                  "yMax": 0.2728851
+                },
+                "detectionScore": 0.99998236,
+                "mid": "price_tag",
+                "objectClass": "price_tag"
+              },
+              "priceTagText": "266057\nPREPACK 2 BERKLEY JENSEN FL\n",
+              "entities": [
+                {
+                  "type": "number",
+                  "mentionText": "266057",
+                  "confidence": 1,
+                  "region": {
+                    "xMin": 0.1325,
+                    "xMax": 0.8575,
+                    "yMin": 0.20588236,
+                    "yMax": 0.44607842
+                  },
+                  "normalizedTextValue": "266057"
+                }
+              ]
+            },
+            {
+              "priceTagBox": {
+                "boundingBox": {
+                  "xMin": 0.3351111,
+                  "xMax": 0.43150008,
+                  "yMin": 0.1437522,
+                  "yMax": 0.16703528
+                },
+                "detectionScore": 0.9873115,
+                "mid": "price_tag",
+                "objectClass": "price_tag"
+              },
+              "priceTagText": "9860\n",
+              "entities": [
+                {
+                  "type": "number",
+                  "mentionText": "9860",
+                  "confidence": 1,
+                  "region": {
+                    "xMin": 0.0776699,
+                    "xMax": 0.5291262,
+                    "yMin": 0.31318682,
+                    "yMax": 0.47802198
+                  },
+                  "normalizedTextValue": "9860"
+                }
+              ]
+            }
+          ]
+        }
+        '''
+        svai_response_dict = json.loads(svai_response_string,strict=False)
+        items_dict = []
+        for i in range(len(svai_response_dict["priceTags"])):
+            items_dict.append(svai_response_dict["priceTags"][i]["entities"][0]["normalizedTextValue"])
+        route_json_data["data"][0]["items"] = items_dict
         route_json_file.seek(0)
         json.dump(route_json_data, route_json_file, indent = 4)
 
