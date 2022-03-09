@@ -54,7 +54,8 @@ def process_image(event, context):
     # with open(local_json_filepath, "r") as json_file:
     #     print(json_file.read())
 
-    # Send the referenced image to SVAI to get back a list of item IDs found in the image
+    # Send the referenced image to SVAI to get back a list of item IDs found 
+    # in the image and update file at local_json_filepath
     with open(local_json_filepath,'r+') as route_json_file:
         route_json_data = json.load(route_json_file)
         image_file_location = route_json_data["data"][0]["href"]
@@ -161,8 +162,8 @@ def process_image(event, context):
         json.dump(route_json_data, route_json_file, indent = 4)
 
         # Test: print JSON file contents to logs
-        route_json_file.seek(0)
-        print(route_json_file.read())
+        # route_json_file.seek(0)
+        # print(route_json_file.read())
 
     # $ curl --verbose -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "Content-Type: application/json; charset=utf-8" https://aistreams.googleapis.com/v1alpha1/projects/903129578520/locations/us-central1/clusters:predictShelfHealth -d '{ "camera_id":"1001", "input_image": {"image_gcs_uri": "gs://leyaliu_test/price_tag_test_001.jpg"}, "config": { "processor_name": "projects/626086442885/locations/us/processors/1aac1c81b63cefc1"}, "config": { "price_tag_detection_model": "project }
     
