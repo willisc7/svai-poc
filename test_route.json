@@ -1,35 +1,34 @@
-[
-    {
-        "Date": "12/08/21",
-        "Time": "16:49:58",
-        "Image file name": "gs://route_images/1.jpg",
-        "Position x (m)": "-25.6094",
-        "Position y (m)": "26.8284",
-        "Theta": "-1.2222",
-        "distance to shelf (mm)": "1.2225",
-        "Location type": "Grocery",
-        "Location name": "03E"
+{
+    "notificationId": "0052769d-81f6-473c-aec8-62e0f4074485",
+    "notificationTimestamp": "2022-03-08T00:01:29.280033111Z",
+    "site": {
+        "id": "af1b52a3-e5a7-45fe-a06a-a2f311533645",
+        "name": "Brain Lab",
+        "owner": "b1d4b219-db86-4bdc-9a3b-6046049f2f63"
     },
-    {
-        "Date": "12/08/21",
-        "Time": "16:49:58",
-        "Image file name": "gs://route_images/2.jpg",
-        "Position x (m)": "-25.6094",
-        "Position y (m)": "26.8284",
-        "Theta": "-1.2222",
-        "distance to shelf (mm)": "1.2225",
-        "Location type": "Grocery",
-        "Location name": "03E"
-    },
-    {
-        "Date": "12/08/21",
-        "Time": "16:54:11",
-        "Image file name": "gs://route_images/3.jpg",
-        "Position x (m)": "-27.9435",
-        "Position y (m)": "2.6395",
-        "Theta": "1.5817",
-        "distance to shelf (mm)": "2.0192",
-        "Location type": "Grocery",
-        "Location name": "03E"
-    }
-]
+    "data": [
+        {
+            "name": "gs://route_images_00/1.jpg",
+            "bucket": "customerDataBucket",
+            "hash": "6d7c77fe-44b0-4b38-9723-713c61caac25",
+            "timestamp": "2022-03-08T00:01:29.279800176Z",
+            "location": {
+                "id": "d65223e2-111c-44e4-a518-753da77b97ec",
+                "area": "grocery",
+                "aisle": "01R",
+                "section": "01"
+            },
+            "sensorName": "color_top",
+            "routeInfo": {
+                "routeId": "bb3c86b5-6703-4de2-a1b0-3247d9c0bbbd",
+                "activityId": "8d77c9fc-16d3-4c9f-81bf-8a2b2596d90f"
+            },
+            "pose": {
+                "x": 1.2,
+                "y": -2.3,
+                "theta": 0.2
+            },
+            "href": "gs://route_images_00/1.jpg"
+        }
+    ]
+}

@@ -17,7 +17,7 @@ gcloud functions deploy svai-extract \
 --runtime python39 \
 --trigger-bucket route_metadata_00 \
 --entry-point process_image \
-&& gsutil cp test_route.csv gs://route_metadata_00
+&& gsutil cp test_route.json gs://route_metadata_00
 ```
 
 ### Cleanup

@@ -17,7 +17,6 @@
 
 import json
 import os
-import csv
 
 from collections import defaultdict
 from google.cloud import storage
@@ -42,44 +41,37 @@ def process_image(event, context):
     bucket_name = event['bucket']
     filename = event['name']
 
-    local_csv_filepath = "/tmp/test_route.csv"
+    # Download route JSON and store at path in local_json_filepath
     local_json_filepath = "/tmp/test_route.json"
-    
-    # Convert CSV to JSON and store both in /tmp
-    # todo: do this in standalone function
-    print("Downloading gs://" + bucket_name + "/" + filename + " to " + local_csv_filepath)
+    print("Downloading gs://" + bucket_name + "/" + filename + " to " + local_json_filepath)
     metadata_bucket = storage_client.bucket(bucket_name)
-    metadata_csv_blob = metadata_bucket.blob(filename)
-    metadata_csv_blob.download_to_filename(local_csv_filepath)
+    metadata_json_blob = metadata_bucket.blob(filename)
+    metadata_json_blob.download_to_filename(local_json_filepath)
+    print("Successfully downloaded " + local_json_filepath)
 
-    print("Converting " + local_csv_filepath + " to " + local_json_filepath)
-    json_array = []
-    with open(local_csv_filepath, encoding='utf-8') as csvf:
-        csv_reader = csv.DictReader(csvf) 
-        for row in csv_reader: 
-            json_array.append(row)
+    # Test: print JSON file contents to logs
+    # todo: dump to string and replace newlines with spaces
+    # with open(local_json_filepath, "r") as json_file:
+    #     print(json_file.read())
 
-    with open(local_json_filepath, 'w', encoding='utf-8') as jsonf:
-        jsonf.write(json.dumps(json_array, indent=4))
+    # Send the referenced image to SVAI to get back a list of item IDs found in the image
+    with open(local_json_filepath,'r+') as route_json_file:
+        route_json_data = json.load(route_json_file)
+        image_file_location = route_json_data["data"][0]["href"]
+        print("Sending " + image_file_location + " to SVAI to extract item IDs from image")
 
-    print("Successfully converted " + local_csv_filepath + " to " + local_json_filepath)
+        # Placeholder: SVAI API call happens here
+        # item_ids_found_json = {"items":["267364","274187","013400"]}
+        # route_json_data["data"][0].update(item_ids_found_json)
+        route_json_data["data"][0]["items"] = ["267364","274187","013400"]
+        route_json_file.seek(0)
+        json.dump(route_json_data, route_json_file, indent = 4)
 
-    # Test: check JSON file contents
-    # json_file = open(local_json_filepath, "r")
-    # print(json_file.read())
+        # Test: print JSON file contents to logs
+        route_json_file.seek(0)
+        print(route_json_file.read())
 
-    # For each JSON array index (which we assume is a route), send the
-    # referenced image to SVAI to get back a list of item IDs found
-    # in the image
-
-    route_json_file = open(local_json_filepath, "r")
-    route_json_content = route_json_file.read()
-    route_json_object = json.loads(route_json_content)
-    for i in range(len(route_json_object)):
-        # todo: parallelize
-        image_file = route_json_object[i]['Image file name']
-        print("Sending " + image_file + " to SVAI to extract item IDs from image")
-        # todo: append item IDs to JSON index
+    # $ curl --verbose -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "Content-Type: application/json; charset=utf-8" https://aistreams.googleapis.com/v1alpha1/projects/903129578520/locations/us-central1/clusters:predictShelfHealth -d '{ "camera_id":"1001", "input_image": {"image_gcs_uri": "gs://leyaliu_test/price_tag_test_001.jpg"}, "config": { "processor_name": "projects/626086442885/locations/us/processors/1aac1c81b63cefc1"}, "config": { "price_tag_detection_model": "project }
     
     # Upload JSON file to gs://route_results_00 to customer to consume
     # todo: read in result bucket from os.environ["RESULT_BUCKET"]

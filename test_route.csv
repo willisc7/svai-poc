@@ -1,4 +1,0 @@
-Date,Time,Image file name,Position x (m),Position y (m),Theta,distance to shelf (mm),Location type,Location name
-12/08/21,16:49:58,gs://route_images_00/1.jpg,-25.6094,26.8284,-1.2222,1.2225,Grocery,03E
-12/08/21,16:49:58,gs://route_images_00/2.jpg,-25.6094,26.8284,-1.2222,1.2225,Grocery,03E
-12/08/21,16:54:11,gs://route_images_00/3.jpg,-27.9435,2.6395,1.5817,2.0192,Grocery,03E
