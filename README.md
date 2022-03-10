@@ -3,8 +3,12 @@
 * Disable constraints/cloudfunctions.allowedIngressSettings org policy on the project
 * Disable constraints/iam.disableServiceAccountKeyCreation org policy on the project
 * Enable all the APIs https://console.cloud.google.com/flows/enableapi?apiid=cloudfunctions,cloudbuild.googleapis.com,pubsub,storage_api,vision.googleapis.com&redirect=https://cloud.google.com/functions/docs/tutorials/ocr&_ga=2.154163455.673635666.1645538540-966849366.1644425268
-* Give default app engine svc acct owner privs (fix later)
+* Give default app engine svc acct owner privs (fix later but needs at least data editor for BQ insert)
 * Used this as a guide: https://cloud.google.com/functions/docs/tutorials/ocr#functions_ocr_setup-python
+* In BQ, create:
+  * dataset named "routes"
+  * table named "test-data"
+  * schema in test-data table that has one field of type STRING called RouteData
 
 ### Setup
 

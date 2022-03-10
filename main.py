@@ -21,9 +21,22 @@ import os
 from collections import defaultdict
 from google.cloud import storage
 from google.cloud import vision
+from google.cloud import bigquery
+from google.cloud.bigquery import dataset
 
 vision_client = vision.ImageAnnotatorClient()
 storage_client = storage.Client()
+
+# todo: take in project, routes, and dataset as inputs
+def insert_into_dataset(project_id, route_dataset, route_table, json_str):
+  bq_client = bigquery.Client(project=project_id)
+  dataset_ref = bigquery.Dataset(
+      dataset.DatasetReference(project_id, route_dataset))
+  table = bq_client.get_table(
+        dataset_ref.table(route_table))
+  rows = [(json_str,)]
+  errors = bq_client.insert_rows(table, rows)
+  assert errors == []
 
 def process_image(event, context):
     """Background Cloud Function to be triggered by Cloud Storage.
@@ -161,11 +174,16 @@ def process_image(event, context):
         route_json_file.seek(0)
         json.dump(route_json_data, route_json_file, indent = 4)
 
+        # Insert JSON into BQ
+        project_id = 'brain-svai-poc-01'
+        route_dataset = 'routes'
+        route_table = 'test-data'
+        route_json_str = json.dumps(route_json_data)
+        insert_into_dataset(project_id, route_dataset, route_table, route_json_str)
+
         # Test: print JSON file contents to logs
         # route_json_file.seek(0)
         # print(route_json_file.read())
-
-    # $ curl --verbose -X POST -H "Authorization: Bearer $(gcloud auth print-access-token)" -H "Content-Type: application/json; charset=utf-8" https://aistreams.googleapis.com/v1alpha1/projects/903129578520/locations/us-central1/clusters:predictShelfHealth -d '{ "camera_id":"1001", "input_image": {"image_gcs_uri": "gs://leyaliu_test/price_tag_test_001.jpg"}, "config": { "processor_name": "projects/626086442885/locations/us/processors/1aac1c81b63cefc1"}, "config": { "price_tag_detection_model": "project }
     
     # Upload JSON file to gs://route_results_00 to customer to consume
     # todo: read in result bucket from os.environ["RESULT_BUCKET"]
@@ -174,7 +192,6 @@ def process_image(event, context):
     blob = results_bucket.blob("test_route.json")
     
     # todo: insert JSON to BQ
-    # todo: query with Looker
 
     print("Saving result to gs://" + results_bucket_name + "/test_route.json")
 
