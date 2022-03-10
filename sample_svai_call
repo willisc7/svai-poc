@@ -1,0 +1,158 @@
+import datetime
+import json
+import os
+import requests
+
+from google.cloud import bigquery
+from google.cloud.bigquery import dataset
+
+
+def get_slot_identifier_rows(response):
+  store_id = 1  # For now, assume 1.
+  aisle_id = 1  # for now, assume 1.
+  rows = []
+  for shelf_slot in response.get('shelfSlots', ()):
+    rows.append((store_id, aisle_id, shelf_slot.get('shelfLevel', 0),
+                 shelf_slot.get('slotPosition', 0)))
+  return rows
+
+
+def get_slot_image_source_rows(image_metadata, response):
+  rows = []
+  for shelf_slot in response.get('shelfSlots', ()):
+    slot_base = (0, 0, 0, 0)
+    if 'region' in shelf_slot and 'points' in shelf_slot['region']:
+      # Assuming a shelf slot with region represented by 4 points.
+      assert len(shelf_slot['region']['points']) == 4
+      slot_base = (
+          shelf_slot['region']['points'][3].get('x', 0.0),  # bottom left x.
+          shelf_slot['region']['points'][3].get('y', 0.0),  # bottom left y.
+          shelf_slot['region']['points'][2].get('x', 0.0),  # bottom right x.
+          shelf_slot['region']['points'][2].get('y', 0.0),  # bototm right y.
+      )
+    rows.append(
+        (image_metadata['time'], image_metadata['camera_id'], slot_base))
+  return rows
+
+
+def get_ml_metadata_rows(response_json, response_time):
+  list_price = 0.0  # TODO(mmoynihan): consider price tag information.
+  discount_price = 0.0
+  hitl_verified = False
+  rows = []
+  for shelf_slot in response_json.get('shelfSlots', ()):
+    stock_level = 0.0
+    if 'stockLevel' in shelf_slot:
+      classification_result = shelf_slot['stockLevel']
+      if classification_result == 'STOCK_LEVEL_UNSPECIFIED':
+        stock_level = 0.0
+      elif classification_result == 'STOCK_LEVEL_EMPTY':
+        stock_level = 0.0
+      elif classification_result == 'STOCK_LEVEL_LOW':
+        stock_level = 0.1
+      elif classification_result == 'STOCK_LEVEL_MEDIUM':
+        stock_level = 0.4
+      else:
+        stock_level = 0.8
+    for i, grouped_product_recognition in enumerate(
+        shelf_slot.get('groupedProductRecognitions', ())):
+      is_misplaced = i > 0
+      gtin = ''
+      if 'recognitionResults' in grouped_product_recognition and (
+          'metadata' in grouped_product_recognition['recognitionResults'][0]
+      ) and ('gtins'
+             in grouped_product_recognition['recognitionResults'][0]['metadata']
+            ) and (grouped_product_recognition['recognitionResults'][0]
+                   ['metadata']['gtins']):
+        gtin = grouped_product_recognition['recognitionResults'][0]['metadata'][
+            'gtins'][0]
+      for product_bounding_box in grouped_product_recognition.get(
+          'productBoundingBoxes', ()):
+        rows.append((response_time, gtin, stock_level, list_price,
+                     discount_price, is_misplaced, hitl_verified))
+  return rows
+
+
+def write_json_to_bigquery(image_metadata, response_metadata):
+  print('Image metadata: ', image_metadata)
+  print('Response metadata: ', response_metadata)
+  client = bigquery.Client(project='cloud-store-vision-test')
+  dataset_ref = bigquery.Dataset(
+      dataset.DatasetReference('cloud-store-vision-test', 'StoreVisionDataV2'))
+
+  slot_identifier_rows = get_slot_identifier_rows(response_metadata['json'])
+  if slot_identifier_rows:
+    print('slot_identifier rows: ', slot_identifier_rows)
+    slot_identifier_table = client.get_table(
+        dataset_ref.table('slot_identifier'))
+    errors = client.insert_rows(slot_identifier_table, slot_identifier_rows)
+    assert errors == []
+
+  slot_image_source_rows = get_slot_image_source_rows(image_metadata,
+                                                      response_metadata['json'])
+  if slot_image_source_rows:
+    print('slot_image_source rows: ', slot_image_source_rows)
+    slot_image_source_table = client.get_table(
+        dataset_ref.table('slot_image_source'))
+    errors = client.insert_rows(slot_image_source_table, slot_image_source_rows)
+    assert errors == []
+
+  ml_metadata_rows = get_ml_metadata_rows(response_metadata['json'],
+                                          response_metadata['time'])
+  if ml_metadata_rows:
+    print('ml_metadata rows: ', ml_metadata_rows)
+    ml_metadata_table = client.get_table(dataset_ref.table('ml_metadata'))
+    errors = client.insert_rows(ml_metadata_table, ml_metadata_rows)
+    assert errors == []
+
+
+def svai_api_caller(event, context):
+  project_number = 903129578520
+  dataset_name = 'albertsons_cds_captured_shelf_mixed_ocr_produce_meat_v4'
+  image_path = f'gs://{event["bucket"]}/{event["name"]}'
+  if image_path.endswith('.pb'):  # Don't process protobufs stored here.
+    # Just internal. Not needed for albertsons.
+    return
+  camera_id = os.path.dirname(event['name'])
+  image_metadata = {
+      'gcs_uri': image_path,
+      'camera_id': camera_id,
+      'time': datetime.datetime.now()
+  }
+  print('Image path: ', image_path),
+
+  # Authentication.
+  auth_url = ('http://metadata.google.internal/computeMetadata/v1/instance/'
+              'service-accounts/default/token')
+  auth_req = requests.get(auth_url, headers={'Metadata-Flavor': 'Google'})
+  auth_req.raise_for_status()
+  access_token = auth_req.json()['access_token']
+  print('access_token: ', access_token)
+
+  # Request.
+  print('Trying to run command.')
+  url = ('https://aistreams.googleapis.com/v1alpha1/projects/'
+         f'{project_number}/locations/us-central1/'
+         'clusters:predictShelfHealth?')
+  data = json.dumps({
+      'camera_id': camera_id,
+      'input_image': {
+          'image_gcs_uri': image_path
+      },
+      'config': {
+          'dataset_name': dataset_name
+      }
+  })
+  headers = {
+      'Authorization': f'Bearer {access_token}',
+      'Content-Type': 'application/json; charset=utf-8'
+  }
+  response = requests.post(url, headers=headers, data=data)
+  response_metadata = {
+      'json': response.json(),
+      'time': datetime.datetime.now(),
+  }
+  print('Response json: ', json.dumps(response_metadata['json']))
+  write_json_to_bigquery(image_metadata, response_metadata)
+  print('Ran command.')
+  print('Response text: ', response.text)

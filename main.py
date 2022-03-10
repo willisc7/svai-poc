@@ -17,6 +17,10 @@
 
 import json
 import os
+import requests
+import datetime
+import logging
+import http.client as http_client
 
 from collections import defaultdict
 from google.cloud import storage
@@ -27,7 +31,6 @@ from google.cloud.bigquery import dataset
 vision_client = vision.ImageAnnotatorClient()
 storage_client = storage.Client()
 
-# todo: take in project, routes, and dataset as inputs
 def insert_into_dataset(project_id, route_dataset, route_table, json_str):
   bq_client = bigquery.Client(project=project_id)
   dataset_ref = bigquery.Dataset(
@@ -69,110 +72,67 @@ def process_image(event, context):
 
     # Send the referenced image to SVAI to get back a list of item IDs found 
     # in the image and update file at local_json_filepath
+    # todo: dont have the file open for 5 million years
     with open(local_json_filepath,'r+') as route_json_file:
         route_json_data = json.load(route_json_file)
         image_file_location = route_json_data["data"][0]["href"]
         print("Sending " + image_file_location + " to SVAI to extract item IDs from image")
 
-        # Placeholder: SVAI API call happens here
-        # Temp: sample SVAI response string JSON
-        svai_response_string = '''
-        {
-          "priceTags": [
-            {
-              "priceTagBox": {
-                "boundingBox": {
-                  "xMin": 0.84018904,
-                  "xMax": 0.9973369,
-                  "yMin": 0.65774584,
-                  "yMax": 0.735467
-                },
-                "detectionScore": 0.9999897,
-                "mid": "price_tag",
-                "objectClass": "price_tag"
-              },
-              "priceTagText": "244236\nTIDE FREE LIQ HE ORG 208 OZ 15\ndle\n",
-              "entities": [
-                {
-                  "type": "number",
-                  "mentionText": "244236",
-                  "confidence": 1,
-                  "region": {
-                    "xMin": 0.24053451,
-                    "xMax": 0.8285078,
-                    "yMin": 0.3160763,
-                    "yMax": 0.48501363
-                  },
-                  "normalizedTextValue": "244236"
-                }
-              ]
+        # Get access token to call SVAI API
+        print("Acquiring access token")
+        auth_url = ('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token')
+        auth_req = requests.get(auth_url, headers={'Metadata-Flavor': 'Google'})
+        auth_req.raise_for_status()
+        access_token = auth_req.json()['access_token']
+        # print('access_token: ', access_token)
+        print("Access token acquired")
+
+        # Call SVAI API
+        print("Calling the SVAI API")
+        svai_project_number = 903129578520
+        url = ('https://aistreams.googleapis.com/v1alpha1/projects/'
+               f'{svai_project_number}/locations/us-central1/'
+               'clusters:predictShelfHealth?')
+        # data = json.dumps({
+        #     'camera_id': '1001',
+        #     'input_image': {
+        #         'image_gcs_uri': 'gs://route_images_02/1.jpg'
+        #     },
+        #     'config': {
+        #         'dataset_name': 'routes'
+        #     }
+        # })
+        data = json.dumps({
+            "camera_id": "1001",
+            "input_image": {
+                "image_gcs_uri": "gs://route_images_02/1.jpg"
             },
-            {
-              "priceTagBox": {
-                "boundingBox": {
-                  "xMin": 0.76975274,
-                  "xMax": 0.8773764,
-                  "yMin": 0.23598571,
-                  "yMax": 0.2728851
-                },
-                "detectionScore": 0.99998236,
-                "mid": "price_tag",
-                "objectClass": "price_tag"
-              },
-              "priceTagText": "266057\nPREPACK 2 BERKLEY JENSEN FL\n",
-              "entities": [
-                {
-                  "type": "number",
-                  "mentionText": "266057",
-                  "confidence": 1,
-                  "region": {
-                    "xMin": 0.1325,
-                    "xMax": 0.8575,
-                    "yMin": 0.20588236,
-                    "yMax": 0.44607842
-                  },
-                  "normalizedTextValue": "266057"
-                }
-              ]
+            "config": {
+                "price_tag_detection_model": "projects/626086442885/locations/us-central1/endpoints/5284908192021610496"
             },
-            {
-              "priceTagBox": {
-                "boundingBox": {
-                  "xMin": 0.3351111,
-                  "xMax": 0.43150008,
-                  "yMin": 0.1437522,
-                  "yMax": 0.16703528
-                },
-                "detectionScore": 0.9873115,
-                "mid": "price_tag",
-                "objectClass": "price_tag"
-              },
-              "priceTagText": "9860\n",
-              "entities": [
-                {
-                  "type": "number",
-                  "mentionText": "9860",
-                  "confidence": 1,
-                  "region": {
-                    "xMin": 0.0776699,
-                    "xMax": 0.5291262,
-                    "yMin": 0.31318682,
-                    "yMax": 0.47802198
-                  },
-                  "normalizedTextValue": "9860"
-                }
-              ]
-            }
-          ]
+            "analysis_type": "ANALYSIS_TYPE_PRICE_TAG_RECOGNITION"
+        })
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json; charset=utf-8'
         }
-        '''
-        svai_response_dict = json.loads(svai_response_string,strict=False)
+        response = requests.post(url, headers=headers, data=data)
+        response_metadata = {
+            'json': response.json(),
+            'time': datetime.datetime.now(),
+        }
+        print('Response json: ', json.dumps(response_metadata['json']))
+
+        # Pull item IDs out of SVAI response
+        print("Appending item IDs from SVAI response to original image metadata JSON")
+        svai_response_dict = json.loads(response,strict=False)
         items_dict = []
         for i in range(len(svai_response_dict["priceTags"])):
             items_dict.append(svai_response_dict["priceTags"][i]["entities"][0]["normalizedTextValue"])
         route_json_data["data"][0]["items"] = items_dict
         route_json_file.seek(0)
         json.dump(route_json_data, route_json_file, indent = 4)
+        print("Successfully appended item IDs to original image metadata JSON")
 
         # Insert JSON into BQ
         project_id = 'brain-svai-poc-01'
@@ -185,9 +145,9 @@ def process_image(event, context):
         # route_json_file.seek(0)
         # print(route_json_file.read())
     
-    # Upload JSON file to gs://route_results_00 to customer to consume
+    # Upload JSON file to gs://route_results_02 to customer to consume
     # todo: read in result bucket from os.environ["RESULT_BUCKET"]
-    results_bucket_name = "route_results_00"
+    results_bucket_name = "route_results_02"
     results_bucket = storage_client.get_bucket(results_bucket_name)
     blob = results_bucket.blob("test_route.json")
     

@@ -12,16 +12,25 @@
 
 ### Setup
 
-0. Create the bucket that will store the route images `gsutil mb gs://route_images_00`
-0. Create the bucket that will receive the route metadata CSV and trigger the cloud function `gsutil mb gs://route_metadata_00`
-0. Create the bucket where the resulting JSON file containing the items found in the route pictures and their location will be stored `gsutil mb gs://route_results_00`
+0. Create the bucket that will store the route images, the bucket that will receive the route metadata CSV and trigger the cloud function, and the bucket where the resulting JSON file containing the items found in the route pictures and their location will be stored
+    ```
+    gsutil mb gs://route_images_02
+    gsutil mb gs://route_metadata_02
+    gsutil mb gs://route_results_02
+    ```
+0. Upload images to `gsutil mb gs://route_images_02`
+    ```
+    gsutil cp 1.jpg gs://route_images_02
+    gsutil cp 2.jpg gs://route_images_02
+    gsutil cp 3.jpg gs://route_images_02
+    ```
 0. Deploy the image processing function with a Cloud Storage trigger and upload CSV to trigger it
 ```
 gcloud functions deploy svai-extract \
 --runtime python39 \
---trigger-bucket route_metadata_00 \
+--trigger-bucket route_metadata_02 \
 --entry-point process_image \
-&& gsutil cp test_route.json gs://route_metadata_00
+&& gsutil cp test_route.json gs://route_metadata_02
 ```
 
 ### Cleanup
