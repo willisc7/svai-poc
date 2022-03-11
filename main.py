@@ -31,6 +31,14 @@ from google.cloud.bigquery import dataset
 vision_client = vision.ImageAnnotatorClient()
 storage_client = storage.Client()
 
+def debug_requests_on():
+    http_client.HTTPConnection.debuglevel = 1
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+    requests_log = logging.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
+
 def insert_into_dataset(project_id, route_dataset, route_table, json_str):
   bq_client = bigquery.Client(project=project_id)
   dataset_ref = bigquery.Dataset(
@@ -73,6 +81,7 @@ def process_image(event, context):
     # Send the referenced image to SVAI to get back a list of item IDs found 
     # in the image and update file at local_json_filepath
     # todo: dont have the file open for 5 million years
+    debug_requests_on()
     with open(local_json_filepath,'r+') as route_json_file:
         route_json_data = json.load(route_json_file)
         image_file_location = route_json_data["data"][0]["href"]
@@ -93,22 +102,15 @@ def process_image(event, context):
         url = ('https://aistreams.googleapis.com/v1alpha1/projects/'
                f'{svai_project_number}/locations/us-central1/'
                'clusters:predictShelfHealth?')
-        # data = json.dumps({
-        #     'camera_id': '1001',
-        #     'input_image': {
-        #         'image_gcs_uri': 'gs://route_images_02/1.jpg'
-        #     },
-        #     'config': {
-        #         'dataset_name': 'routes'
-        #     }
-        # })
+
         data = json.dumps({
-            "camera_id": "1001",
+            "camera_id":"1001",
             "input_image": {
                 "image_gcs_uri": "gs://route_images_02/1.jpg"
             },
             "config": {
-                "price_tag_detection_model": "projects/626086442885/locations/us-central1/endpoints/5284908192021610496"
+                "processor_name": "projects/626086442885/locations/us/processors/1aac1c81b63cefc1",
+                "price_tag_detection_model": "projects/617321834341/locations/us-central1/endpoints/2885725441702756352"
             },
             "analysis_type": "ANALYSIS_TYPE_PRICE_TAG_RECOGNITION"
         })
