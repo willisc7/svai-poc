@@ -31,14 +31,6 @@ from google.cloud.bigquery import dataset
 vision_client = vision.ImageAnnotatorClient()
 storage_client = storage.Client()
 
-def debug_requests_on():
-    http_client.HTTPConnection.debuglevel = 1
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
-
 def insert_into_dataset(project_id, route_dataset, route_table, json_str):
   bq_client = bigquery.Client(project=project_id)
   dataset_ref = bigquery.Dataset(
@@ -81,7 +73,6 @@ def process_image(event, context):
     # Send the referenced image to SVAI to get back a list of item IDs found 
     # in the image and update file at local_json_filepath
     # todo: dont have the file open for 5 million years
-    debug_requests_on()
     with open(local_json_filepath,'r+') as route_json_file:
         route_json_data = json.load(route_json_file)
         image_file_location = route_json_data["data"][0]["href"]
@@ -127,38 +118,34 @@ def process_image(event, context):
 
         # Pull item IDs out of SVAI response
         print("Appending item IDs from SVAI response to original image metadata JSON")
-        svai_response_dict = json.loads(response,strict=False)
+        svai_response_dict = json.loads(json.dumps(response_metadata['json']),strict=False)
         items_dict = []
         for i in range(len(svai_response_dict["priceTags"])):
             items_dict.append(svai_response_dict["priceTags"][i]["entities"][0]["normalizedTextValue"])
         route_json_data["data"][0]["items"] = items_dict
+        # delete test print
         route_json_file.seek(0)
         json.dump(route_json_data, route_json_file, indent = 4)
         print("Successfully appended item IDs to original image metadata JSON")
 
+        # Upload JSON file to gs://route_results_02 to customer to consume
+        # todo: read in result bucket from os.environ["RESULT_BUCKET"]
+        results_bucket_name = "route_results_02"
+        results_bucket = storage_client.get_bucket(results_bucket_name)
+        blob = results_bucket.blob("test_route.json")
+        # Test: print JSON file contents to logs
+        # route_json_file.seek(0)
+        # print(route_json_file.read())
+
+        print("Saving result to gs://" + results_bucket_name + "/test_route.json")
+        blob.upload_from_filename(local_json_filepath)
+        print("File saved.")
+
         # Insert JSON into BQ
-        project_id = 'brain-svai-poc-01'
+        project_id = 'cloud-store-vision-test'
         route_dataset = 'routes'
         route_table = 'test-data'
         route_json_str = json.dumps(route_json_data)
         insert_into_dataset(project_id, route_dataset, route_table, route_json_str)
-
-        # Test: print JSON file contents to logs
-        # route_json_file.seek(0)
-        # print(route_json_file.read())
-    
-    # Upload JSON file to gs://route_results_02 to customer to consume
-    # todo: read in result bucket from os.environ["RESULT_BUCKET"]
-    results_bucket_name = "route_results_02"
-    results_bucket = storage_client.get_bucket(results_bucket_name)
-    blob = results_bucket.blob("test_route.json")
-    
-    # todo: insert JSON to BQ
-
-    print("Saving result to gs://" + results_bucket_name + "/test_route.json")
-
-    blob.upload_from_filename(local_json_filepath)
-
-    print("File saved.")
 
     print("File {} processed.".format(filename))
