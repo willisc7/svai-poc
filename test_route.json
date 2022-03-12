@@ -1,11 +1,9 @@
 {
     "notificationId": "0052769d-81f6-473c-aec8-62e0f4074485",
     "notificationTimestamp": "2022-03-08T00:01:29.280033111Z",
-    "site": {
-        "id": "af1b52a3-e5a7-45fe-a06a-a2f311533645",
-        "name": "Brain Lab",
-        "owner": "b1d4b219-db86-4bdc-9a3b-6046049f2f63"
-    },
+    "siteId": "af1b52a3-e5a7-45fe-a06a-a2f311533645",
+    "siteName": "Brain Lab",
+    "siteOwner": "b1d4b219-db86-4bdc-9a3b-6046049f2f63",
     "data": [
         {
             "name": "gs://route_images_00/1.jpg",
