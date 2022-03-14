@@ -20,9 +20,7 @@
     ```
 0. Upload images to `gsutil mb gs://route_images_02`
     ```
-    gsutil cp 1.jpg gs://route_images_02
-    gsutil cp 2.jpg gs://route_images_02
-    gsutil cp 3.jpg gs://route_images_02
+    gsutil cp ./sample_data/*.jpg gs://route_images_02
     ```
 0. Deploy the image processing function with a Cloud Storage trigger and upload CSV to trigger it
 ```

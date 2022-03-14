@@ -94,10 +94,11 @@ def process_image(event, context):
                f'{svai_project_number}/locations/us-central1/'
                'clusters:predictShelfHealth?')
 
+         # todo: loop through sample_data/image_metadata.json and process multiple images from the route
         data = json.dumps({
             "camera_id":"1001",
             "input_image": {
-                "image_gcs_uri": "gs://route_images_02/1.jpg"
+                "image_gcs_uri": "gs://route_images_02/82ca8d2495d0b4a0f643128f9391383a61ec39d48ea4101d994d422e7799bcad6ad34e303aff29ffa5455e935c18b92e9cc7767c0263e5655439b01c8317fa4f.jpg"
             },
             "config": {
                 "processor_name": "projects/626086442885/locations/us/processors/1aac1c81b63cefc1",

@@ -6,7 +6,7 @@
     "siteOwner": "b1d4b219-db86-4bdc-9a3b-6046049f2f63",
     "data": [
         {
-            "name": "gs://route_images_00/1.jpg",
+            "name": "gs://route_images_00/82ca8d2495d0b4a0f643128f9391383a61ec39d48ea4101d994d422e7799bcad6ad34e303aff29ffa5455e935c18b92e9cc7767c0263e5655439b01c8317fa4f.jpg",
             "bucket": "customerDataBucket",
             "hash": "6d7c77fe-44b0-4b38-9723-713c61caac25",
             "timestamp": "2022-03-08T00:01:29.279800176Z",
