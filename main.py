@@ -32,14 +32,14 @@ vision_client = vision.ImageAnnotatorClient()
 storage_client = storage.Client()
 
 def insert_into_dataset(project_id, route_dataset, route_table, json_str):
-  bq_client = bigquery.Client(project=project_id)
-  dataset_ref = bigquery.Dataset(
-      dataset.DatasetReference(project_id, route_dataset))
-  table = bq_client.get_table(
-        dataset_ref.table(route_table))
-  rows = [(json_str,)]
-  errors = bq_client.insert_rows(table, rows)
-  assert errors == []
+    bq_client = bigquery.Client(project=project_id)
+    dataset_ref = bigquery.Dataset(
+        dataset.DatasetReference(project_id, route_dataset))
+    table = bq_client.get_table(
+            dataset_ref.table(route_table))
+    rows = [(json_str,)]
+    errors = bq_client.insert_rows(table, rows)
+    assert errors == []
 
 def process_image(event, context):
     """Background Cloud Function to be triggered by Cloud Storage.
@@ -129,24 +129,24 @@ def process_image(event, context):
         json.dump(route_json_data, route_json_file, indent = 4)
         print("Successfully appended item IDs to original image metadata JSON")
 
-        # Upload JSON file to gs://route_results_02 to customer to consume
-        # todo: read in result bucket from os.environ["RESULT_BUCKET"]
-        results_bucket_name = "route_results_02"
-        results_bucket = storage_client.get_bucket(results_bucket_name)
-        blob = results_bucket.blob("test_route.json")
-        # Test: print JSON file contents to logs
-        # route_json_file.seek(0)
-        # print(route_json_file.read())
-
-        print("Saving result to gs://" + results_bucket_name + "/test_route.json")
-        blob.upload_from_filename(local_json_filepath)
-        print("File saved.")
-
         # Insert JSON into BQ
         project_id = 'cloud-store-vision-test'
         route_dataset = 'routes'
         route_table = 'test-data'
         route_json_str = json.dumps(route_json_data)
         insert_into_dataset(project_id, route_dataset, route_table, route_json_str)
+
+    # Upload JSON file to gs://route_results_02 to customer to consume
+    # todo: read in result bucket from os.environ["RESULT_BUCKET"]
+    results_bucket_name = "route_results_02"
+    results_bucket = storage_client.get_bucket(results_bucket_name)
+    blob = results_bucket.blob("test_route.json")
+    # Test: print JSON file contents to logs
+    # route_json_file.seek(0)
+    # print(route_json_file.read())
+
+    print("Saving result to gs://" + results_bucket_name + "/test_route.json")
+    blob.upload_from_filename(local_json_filepath)
+    print("File saved.")
 
     print("File {} processed.".format(filename))
