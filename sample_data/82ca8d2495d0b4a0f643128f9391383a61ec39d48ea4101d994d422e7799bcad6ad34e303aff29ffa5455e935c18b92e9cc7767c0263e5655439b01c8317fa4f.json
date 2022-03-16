@@ -1,0 +1,32 @@
+{
+    "notificationId": "ec9fdada-0486-41b5-8a8a-6b4b219526c8",
+    "notificationTimestamp": "2022-03-02T14:47:19.983Z",
+    "siteId": "98dcf2fa-4fa8-43ba-b6a4-8794f23b467d",
+    "siteOwner": "35ecedf1-73a9-4490-90a3-f5b0363ffddc",
+    "siteName": "Brain Lab",
+    "data": [
+        {
+            "name": "82ca8d2495d0b4a0f643128f9391383a61ec39d48ea4101d994d422e7799bcad6ad34e303aff29ffa5455e935c18b92e9cc7767c0263e5655439b01c8317fa4f.jpg",
+            "bucket": "route_metadata_02",
+            "hash": "82ca8d2495d0b4a0f643128f9391383a61ec39d48ea4101d994d422e7799bcad6ad34e303aff29ffa5455e935c18b92e9cc7767c0263e5655439b01c8317fa4f",
+            "timestamp": "2022-03-02T14:47:18.901Z",
+            "location": {
+              "id": "eeeb5331-5b89-3a37-ba65-1c38d5a52731",
+              "area": "area_grocery",
+              "aisle": "aisle_01E",
+              "section": "section_09"
+            },
+            "sensorName": "mono_reserve",
+            "routeInfo": {
+              "routeId": "4581a175-6c99-4347-9a01-ecaf7ceb94e6",
+              "activityId": "963921b7-06fc-408a-b696-e343f3023e6f"
+            },
+            "pose": {
+              "x": -38.4226,
+              "y": -8.425,
+              "theta": 1.4255
+            },
+            "href": "gs://route_images_02/82ca8d2495d0b4a0f643128f9391383a61ec39d48ea4101d994d422e7799bcad6ad34e303aff29ffa5455e935c18b92e9cc7767c0263e5655439b01c8317fa4f.jpg"
+        }
+    ]
+}
