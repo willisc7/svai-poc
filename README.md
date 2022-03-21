@@ -28,11 +28,11 @@ gcloud functions deploy svai-extract \
 --runtime python39 \
 --set-env-vars RESULTS_BUCKET=route_results_02 \
 --trigger-bucket route_metadata_02 \
---entry-point process_image \
+--entry-point process_image
 ```
 0. While the SVAI API is in alpha give it about 1 minute in between uploads to avoid 500 errors
 ```
-gsutil cp <METADATA_JSON> gs://route_metadata_02
+for FILE in ./sample_data/*.json; do gsutil cp $FILE gs://route_metadata_02; sleep 60; done
 ```
 
 ### Cleanup
