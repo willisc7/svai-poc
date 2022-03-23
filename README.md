@@ -20,7 +20,7 @@
     ```
 0. Upload images to `gsutil mb gs://route_images_02`
     ```
-    gsutil cp ./sample_data/*.jpg gs://route_images_02
+    gsutil -m cp ./sample_data/*.jpg gs://route_images_02
     ```
 0. Deploy the image processing function with a Cloud Storage trigger
 ```
@@ -30,9 +30,21 @@ gcloud functions deploy svai-extract \
 --trigger-bucket route_metadata_02 \
 --entry-point process_image
 ```
+0. Metadata is typically generated as a single JSON file. We need to split that into one JSON file per image because event-based cloud function triggers timeout after 10 minutes. Do the following to properly split the files:
+    * Copy the JSON that looks like the following in the `image_metadata.json` accompanying the images to `metadata_splitter.sh`
+        ```
+        "notificationId": "some_value",
+        "notificationTimestamp": "some_value",
+        "siteId": "some_value",
+        "siteOwner": "some_value",
+        "siteName": "some_value",
+        ```
+    * In `metadata_splitter.sh` change the filepath on the line with the `jq` statement to point to `image_metadata.json`
+    * In `image_metadata.json` find and replace all bucket names and file paths with `route_images_02`
+    * Run the script: `./metadata_splitter.sh`
 0. While the SVAI API is in alpha give it about 1 minute in between uploads to avoid 500 errors
 ```
-for FILE in ./sample_data/*.json; do gsutil cp $FILE gs://route_metadata_02; sleep 60; done
+for FILE in ./SOME_DATE/*.json; do gsutil cp $FILE gs://route_metadata_02; sleep 60; done
 ```
 
 ### Cleanup
