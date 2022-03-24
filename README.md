@@ -49,3 +49,15 @@ for FILE in ./SOME_DATE/*.json; do gsutil cp $FILE gs://route_metadata_02; sleep
 
 ### Cleanup
 `gcloud functions delete svai-extract`
+
+### Demo Flow
+0. `gsutil cp ./sample_data/61f53b8cc6f5379721f5c7b24c100d8f8f7d9c323ef7366ff4f5d73fa2b3530331b6b1da2ec4b9054862a3808edc4bef782041d207d24b448dff7540fd158f7f.json gs://route_metadata_02`
+0. [Cloud Function Logs](https://console.cloud.google.com/functions/details/us-central1/svai-extract?env=gen1&project=cloud-store-vision-test&tab=logs)
+0. [BigQuery Table](https://console.cloud.google.com/bigquery?referrer=search&project=cloud-store-vision-test&d=routes&p=cloud-store-vision-test&t=test-data&page=table&ws=!1m5!1m4!4m3!1scloud-store-vision-test!2sroutes!3stest-data) using the following query:
+    ```
+    SELECT *
+    FROM `cloud-store-vision-test.routes.test-data` AS testdata
+    LEFT JOIN UNNEST(testdata.data) as testdata__data
+    WHERE testdata__data.hash = FROM_BASE64 ('003c0cf434790ee7aabee1672e8b467c1cfe75d1d680e0c7161371f3ad67492e476c175be00f8a8107365c1aeb32621d8e8c2b92568e1ec073f7e15b8c7d1a35')
+    ```
+        
