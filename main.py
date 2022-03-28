@@ -94,7 +94,7 @@ def process_image(event, context):
     svai_response_dict = json.loads(json.dumps(response_metadata['json']),strict=False)
     items = []
     if len(svai_response_dict) == 0:
-        items.append(0)
+        items.append("0")
     else:
         for i in range(len(svai_response_dict["priceTags"])):
             # todo: dont insert if number isnt 7 digits
