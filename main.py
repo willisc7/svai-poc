@@ -93,8 +93,12 @@ def process_image(event, context):
     print("Appending item IDs from SVAI response to original image metadata JSON")
     svai_response_dict = json.loads(json.dumps(response_metadata['json']),strict=False)
     items = []
-    for i in range(len(svai_response_dict["priceTags"])):
-        items.append(svai_response_dict["priceTags"][i]["entities"][0]["normalizedTextValue"])
+    if len(svai_response_dict) == 0:
+        items.append(0)
+    else:
+        for i in range(len(svai_response_dict["priceTags"])):
+            # todo: dont insert if number isnt 7 digits
+            items.append(svai_response_dict["priceTags"][i]["entities"][0]["normalizedTextValue"])
     route_json_data["data"][0]["items"] = items
     route_json_file = open(local_json_filepath, 'w')
     route_json_str = json.dumps(route_json_data)
