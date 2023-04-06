@@ -1,0 +1,1 @@
+{ "notificationId": "", "notificationTimestamp": "", "siteId": "", "siteOwner": "", "siteName": "", "data": [ { "name": "", "bucket": "", "hash": "", "timestamp": "", "location": { "id": "", "area": "", "aisle": "", "section": "" }, "sensorName": "", "routeInfo": { "routeId": "", "activityId": "" }, "pose": { "x": -3.3569, "y": 33.9962, "theta": 1.4268 }, "href": "" } ] }

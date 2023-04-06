@@ -26,8 +26,8 @@
 
 boilerplate_json=$(cat  << EOF
 {
-    "notificationId": "ec9fdada-0486-41b5-8a8a-6b4b219526c8",
-    "notificationTimestamp": "2022-03-02T14:47:19.983Z",
+    "notificationId": "04ecadd0-6d84-47db-b08b-b2012d103e9c",
+    "notificationTimestamp": "2022-03-28T14:17:16.689Z",
     "siteId": "98dcf2fa-4fa8-43ba-b6a4-8794f23b467d",
     "siteOwner": "35ecedf1-73a9-4490-90a3-f5b0363ffddc",
     "siteName": "Brain Lab",
@@ -38,7 +38,7 @@ EOF
 
 dir_name=$(date "+%Y%m%d")
 mkdir $dir_name
-jq -c '.data[]' ./combined_metadata.json | while read i; do
+jq -c '.data[]' ./test/image_metadata.json | while read i; do
     output_filepath="$dir_name/$(echo $i | jq -r .hash).json"
     echo $boilerplate_json > $output_filepath
     echo $(jq ".data[0] |= . + $i" $output_filepath) > $output_filepath

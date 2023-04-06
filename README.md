@@ -8,7 +8,7 @@
 * In BQ, create:
   * dataset named "routes"
   * table named "test-data"
-  * schema in test-data table that has one field of type STRING called RouteData
+  * create a table called test-data and upload `table_schema.json` and select auto-detect schema
 
 ### Setup
 
